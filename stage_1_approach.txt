@@ -1,0 +1,46 @@
+Exploratory data analysis:
+•	Did basic checks on the number of rows, datatypes of columns, distributions, number of missing values, etc.
+•	Identified what features were categorical
+•	Beyond this, I did not do much EDA
+Feature Engineering
+•	Converted the feature "construction_year" into date, assuming that the date is the first day of the year
+o	Example: If  construction_year is 2011, then the derived feature  construction_date is 01/01/2011
+•	Created a new feature called "age_of_waterpoint" , which is the difference between "date_recorded" and " construction_date" in days
+o	The idea was to capture how old the water-point was by the time the data was recorded
+•	I then dropped all the date features; dropped latitude and longitude features as I did not know how to use them
+•	No other feature engineering /  feature selection was done ; all other features were retained
+Missing Value Treatment:
+•	For the Boolean features "public_meeting" and "permit", imputed missing values using the most frequent value in the respective features
+•	For the derived feature " age_of_waterpoint", replaced missing values with -1
+•	For all categorical features, I set missing values as "-999"
+Preprocessing:
+•	For the categorical features, I converted them into numeric by using Label Encoder
+•	Did not perform any preprocessing for the continuous features
+Modeling:
+•	Used a stacked ensemble approach 
+•	The following were the classifiers:
+o	Base Classifier 1: Xgboost model with manually tuned hyperparameters (just used the same  hyperparameters I had used for some previous competitions and updated them through trial and error)
+o	Base Classifier 2: Xgboost model with hyper parameters optimized using Bayesian Hyperparameter optimization
+o	Final Meta Classifier: The probability predictions of the above two classifiers were then fed into a Logistic regression model to obtain the final probability outputs
+o	Threshold Cut off:
+	The competition was being evaluated on the evaluation metric  (0.9*FNR) + (0.1*FPR)
+	When I was working on my base classifiers and meta classifier, I only used ROC AUC to evaluate them
+	Once I had the probability outputs from my meta classifier for the validation dataset, I identified the threshold for which  (0.9*FNR) + (0.1*FPR) is minimized using the ROC curve
+	I then applied this threshold on the probability predictions on the test set and made the submission
+
+Some Notes:
+•	Approaches used for machine learning competitions are not necessarily the ideal approach to use in real world data science projects
+•	The approach above is only focused on maximizing the performance score. In a real world project, I would do the following:
+o	Perform a more extensive EDA to understand the data better ( I cannot stress enough how important this step is. The data scientist should have all the summary statistics of the data at their fingertips, this is what inspires confidence in the client. If an extensive EDA is not done, well into the project, you may find yourself asking the client questions that you could have found answers to in the data itself, due to which the client may lose confidence in you)
+o	Reconsider using Label Encoder for categorical features, since I was using xgboost  (I did consider one hot encoding, but due to the high cardinality of the data, I decided to proceed with label encoding and come back later if the models don’t do well)
+o	Its usually recommended that your base classifiers are very different and uncorrelated, though here I have used models that are similar (both xgboost with different hyperparameters)
+	Again the only reason I did this was because I saw a performance improvement
+	Also keep in mind, that while ensemble models are widely used in machine learning competitions, they may not always be good to use in real world projects. The ensemble approach above probably provided me a 2nd or 3rd decimal place improvement in performance over the Base Classifier 2. In most industry cases, this tiny improvement does not justify the increased complexity of using ensembles
+
+
+Resources:
+•	For stacked ensemble : https://www.kaggle.com/arthurtok/introduction-to-ensembling-stacking-in-python
+•	For  Bayesian Hyperparameter optimization:
+o	theory: https://towardsdatascience.com/a-conceptual-explanation-of-bayesian-model-based-hyperparameter-optimization-for-machine-learning-b8172278050f
+o	Code: https://www.kaggle.com/nanomathias/bayesian-optimization-of-xgboost-lb-0-9769
+ 
